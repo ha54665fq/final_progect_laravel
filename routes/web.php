@@ -12,7 +12,17 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
+use App\Http\Controllers\CourseController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\AssignmentController;
+use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\SubmissionController;
 
+Route::resource('courses', CourseController::class);
+Route::resource('users', UserController::class);
+Route::resource('assignments', AssignmentController::class);
+Route::resource('enrollments', EnrollmentController::class);
+Route::resource('submissions', SubmissionController::class);
 Route::get('/', function () {
     return view('welcome');
 });

@@ -9,7 +9,7 @@ class Submission extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['assignment_id', 'student_id', 'file_path', 'submitted_at'];
+    protected $fillable = ['assignment_id', 'student_id', 'file_path', 'submitted_at', 'grade'];
 
     public function assignment()
     {

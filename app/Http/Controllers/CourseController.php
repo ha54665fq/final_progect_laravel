@@ -11,59 +11,90 @@ use Illuminate\Http\Request;
 
 class CourseController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
-        $courses = Course::all();
-        return response()->json($courses);
+        $user = auth()->user();
+
+        // Admin sees all courses
+        if ($user->role === 'admin') {
+            $courses = Course::with(['teacher'])->get();
+        }
+        // Teacher sees their courses
+        elseif ($user->role === 'teacher') {
+            $courses = Course::where('teacher_id', $user->id)->with(['teacher'])->get();
+        }
+        // Student sees enrolled courses
+        else {
+            $courses = $user->enrolledCourses()->with(['teacher'])->get();
+        }
+
+        return view('courses.index', compact('courses'));
     }
 
     public function create()
     {
-        return view('courses.create');
+        $this->authorize('manage-courses');
+        $teachers = User::where('role', 'teacher')->get();
+        return view('courses.create', compact('teachers'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $this->authorize('manage-courses');
+
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'teacher_id' => 'required|exists:users,id'
         ]);
 
-        $course = Course::create($request->only('title', 'description'));
+        Course::create($validated);
 
-        return response()->json(['message' => 'Course created', 'course' => $course], 201);
+        return redirect()->route('courses.index')
+            ->with('success', 'Course created successfully.');
     }
 
-    public function show($id)
+    public function show(Course $course)
     {
-        $course = Course::findOrFail($id);
-        return response()->json($course);
+        $course->load(['teacher', 'assignments', 'enrollments.student']);
+        return view('courses.show', compact('course'));
     }
 
-    public function edit($id)
+    public function edit(Course $course)
     {
-        $course = Course::findOrFail($id);
-        return view('courses.edit', compact('course'));
+        $this->authorize('manage-courses');
+        $teachers = User::where('role', 'teacher')->get();
+        return view('courses.edit', compact('course', 'teachers'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Course $course)
     {
-        $request->validate([
+        $this->authorize('manage-courses');
+
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'teacher_id' => 'required|exists:users,id'
         ]);
 
-        $course = Course::findOrFail($id);
-        $course->update($request->only('title', 'description'));
+        $course->update($validated);
 
-        return response()->json(['message' => 'Course updated', 'course' => $course]);
+        return redirect()->route('courses.index')
+            ->with('success', 'Course updated successfully.');
     }
 
-    public function destroy($id)
+    public function destroy(Course $course)
     {
-        $course = Course::findOrFail($id);
+        $this->authorize('manage-courses');
+
         $course->delete();
 
-        return response()->json(['message' => 'Course deleted']);
+        return redirect()->route('courses.index')
+            ->with('success', 'Course deleted successfully.');
     }
 }

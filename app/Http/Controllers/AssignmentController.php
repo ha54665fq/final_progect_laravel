@@ -7,46 +7,78 @@ use Illuminate\Http\Request;
 
 class AssignmentController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        // Only teachers and admins can manage assignments
+        $this->middleware('can:manage-assignments')->except(['index', 'show']);
+    }
+
     public function index()
     {
-        return response()->json(Assignment::all());
+        if (auth()->user()->role === 'student') {
+            // Students only see assignments from courses they're enrolled in
+            $assignments = Assignment::whereHas('course.enrollments', function($query) {
+                $query->where('student_id', auth()->id());
+            })->with('course')->get();
+        } else {
+            $assignments = Assignment::with('course')->get();
+        }
+        return view('assignments.index', compact('assignments'));
     }
 
     public function create()
     {
-         $courses = Course::all();
-        return view('assignments.create',compact('courses'));
+        $courses = Course::all();
+        return view('assignments.create', compact('courses'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'course_id' => 'required|exists:courses,id',
-            'title' => 'required|string',
+            'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'due_date' => 'required|date',
+            'due_date' => 'required|date|after:today',
         ]);
 
         $assignment = Assignment::create($request->all());
 
-        return response()->json(['message' => 'Assignment created', 'assignment' => $assignment], 201);
+        return redirect()->route('assignments.index')
+                        ->with('success', 'Assignment created successfully.');
     }
 
     public function show($id)
     {
-        return response()->json(Assignment::findOrFail($id));
+        $assignment = Assignment::with(['course', 'submissions.student'])->findOrFail($id);
+
+        // Check if student has access to this assignment
+        if (auth()->user()->role === 'student') {
+            $hasAccess = $assignment->course->enrollments()
+                ->where('student_id', auth()->id())
+                ->exists();
+
+            if (!$hasAccess) {
+                return redirect()->route('assignments.index')
+                    ->with('error', 'You do not have access to this assignment.');
+            }
+        }
+
+        return view('assignments.show', compact('assignment'));
     }
 
     public function edit($id)
     {
         $assignment = Assignment::findOrFail($id);
-        return view('assignments.edit', compact('assignment'));
+        $courses = Course::all();
+        return view('assignments.edit', compact('assignment', 'courses'));
     }
 
     public function update(Request $request, $id)
     {
         $request->validate([
-            'title' => 'required|string',
+            'course_id' => 'required|exists:courses,id',
+            'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'due_date' => 'required|date',
         ]);
@@ -54,7 +86,8 @@ class AssignmentController extends Controller
         $assignment = Assignment::findOrFail($id);
         $assignment->update($request->all());
 
-        return response()->json(['message' => 'Assignment updated', 'assignment' => $assignment]);
+        return redirect()->route('assignments.index')
+                        ->with('success', 'Assignment updated successfully.');
     }
 
     public function destroy($id)
@@ -62,6 +95,7 @@ class AssignmentController extends Controller
         $assignment = Assignment::findOrFail($id);
         $assignment->delete();
 
-        return response()->json(['message' => 'Assignment deleted']);
+        return redirect()->route('assignments.index')
+                        ->with('success', 'Assignment deleted successfully.');
     }
 }

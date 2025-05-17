@@ -2,9 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Models\Course;
+use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+
 class CoursesTableSeeder extends Seeder
 {
     /**
@@ -14,12 +17,26 @@ class CoursesTableSeeder extends Seeder
      */
     public function run()
     {
-        for ($i = 1; $i <= 10; $i++) {
-            DB::table('courses')->insert([
-                'title' => 'Course ' . $i,
-                'description' => 'Description for course ' . $i,
-                'created_at' => now(),
-                'updated_at' => now(),
+        // Get all teachers
+        $teachers = User::where('role', 'teacher')->get();
+
+        if ($teachers->isEmpty()) {
+            // Create a teacher if none exists
+            $teacher = User::create([
+                'name' => 'Teacher 1',
+                'email' => 'teacher1@example.com',
+                'password' => bcrypt('password'),
+                'role' => 'teacher'
+            ]);
+            $teachers = collect([$teacher]);
+        }
+
+        // Create 5 courses
+        foreach(range(1, 5) as $index) {
+            Course::create([
+                'title' => "Course $index",
+                'description' => "Description for course $index",
+                'teacher_id' => $teachers->random()->id
             ]);
         }
     }

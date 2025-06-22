@@ -9,7 +9,11 @@ class Assignment extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['course_id', 'title', 'description', 'due_date'];
+    protected $fillable = ['course_id', 'title', 'description', 'due_date', 'max_score'];
+
+    protected $casts = [
+        'due_date' => 'date',
+    ];
 
     public function course()
     {

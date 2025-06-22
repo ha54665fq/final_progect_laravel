@@ -16,7 +16,7 @@ class AssignmentsTableSeeder extends Seeder
     {
         for ($i = 1; $i <= 10; $i++) {
             DB::table('assignments')->insert([
-                'course_id' => rand(1, 10),
+                'course_id' => rand(1, 5),
                 'title' => 'Assignment ' . $i,
                 'description' => 'Description for assignment ' . $i,
                 'due_date' => now()->addDays(7),

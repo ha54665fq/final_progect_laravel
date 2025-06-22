@@ -17,7 +17,7 @@ class EnrollmentsTableSeeder extends Seeder
         for ($i = 1; $i <= 10; $i++) {
             DB::table('enrollments')->insert([
                 'student_id' => rand(1, 10),
-                'course_id' => rand(1, 10),
+                'course_id' => rand(1, 5),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

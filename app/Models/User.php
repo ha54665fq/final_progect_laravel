@@ -24,10 +24,6 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
-
     // Role constants
     const ROLE_ADMIN = 'admin';
     const ROLE_TEACHER = 'teacher';
@@ -47,12 +43,6 @@ class User extends Authenticatable
     public function isStudent()
     {
         return $this->role === self::ROLE_STUDENT;
-    }
-
-    // Automatically hash passwords when setting
-    public function setPasswordAttribute($value)
-    {
-        $this->attributes['password'] = bcrypt($value);
     }
 
     // Relationships

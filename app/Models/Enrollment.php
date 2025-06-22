@@ -9,7 +9,16 @@ class Enrollment extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['student_id', 'course_id'];
+    protected $fillable = [
+        'student_id',
+        'course_id',
+        'enrolled_at',
+        'status'
+    ];
+
+    protected $casts = [
+        'enrolled_at' => 'datetime',
+    ];
 
     public function student()
     {

@@ -9,7 +9,21 @@ class Submission extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['assignment_id', 'student_id', 'file_path', 'submitted_at', 'grade'];
+    protected $fillable = [
+        'assignment_id',
+        'student_id',
+        'content',
+        'file_path',
+        'submitted_at',
+        'grade',
+        'feedback',
+        'graded_at'
+    ];
+
+    protected $casts = [
+        'submitted_at' => 'datetime',
+        'graded_at' => 'datetime',
+    ];
 
     public function assignment()
     {

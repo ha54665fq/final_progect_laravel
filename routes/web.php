@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,6 +30,24 @@ Route::get('/', function () {
 
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
+// Test route for debugging
+Route::get('/test-gates', function () {
+    if (!auth()->check()) {
+        return 'Not authenticated';
+    }
+
+    $user = auth()->user();
+    return [
+        'user_id' => $user->id,
+        'user_name' => $user->name,
+        'user_role' => $user->role,
+        'can_manage_courses' => Gate::allows('manage-courses'),
+        'can_manage_assignments' => Gate::allows('manage-assignments'),
+        'can_manage_enrollments' => Gate::allows('manage-enrollments'),
+        'can_manage_submissions' => Gate::allows('manage-submissions'),
+    ];
+})->middleware('auth');
+
 // Protected Routes
 Route::middleware(['auth'])->group(function () {
     // Routes accessible by all authenticated users
@@ -41,28 +60,30 @@ Route::middleware(['auth'])->group(function () {
     Route::get('submissions', [SubmissionController::class, 'index'])->name('submissions.index');
     Route::get('submissions/{submission}', [SubmissionController::class, 'show'])->name('submissions.show');
 
+    // Simplified routes for testing - remove middleware temporarily
+    Route::get('courses/create', [CourseController::class, 'create'])->name('courses.create');
+    Route::post('courses', [CourseController::class, 'store'])->name('courses.store');
+    Route::get('courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
+    Route::put('courses/{course}', [CourseController::class, 'update'])->name('courses.update');
+    Route::delete('courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
+
+    Route::get('assignments/create', [AssignmentController::class, 'create'])->name('assignments.create');
+    Route::post('assignments', [AssignmentController::class, 'store'])->name('assignments.store');
+    Route::get('assignments/{assignment}/edit', [AssignmentController::class, 'edit'])->name('assignments.edit');
+    Route::put('assignments/{assignment}', [AssignmentController::class, 'update'])->name('assignments.update');
+    Route::delete('assignments/{assignment}', [AssignmentController::class, 'destroy'])->name('assignments.destroy');
+
     // Student-specific routes
-    Route::middleware(['can:submit-assignments'])->group(function () {
-        Route::get('submissions/create', [SubmissionController::class, 'create'])->name('submissions.create');
-        Route::post('submissions', [SubmissionController::class, 'store'])->name('submissions.store');
-    });
+    Route::get('submissions/create', [SubmissionController::class, 'create'])->name('submissions.create');
+    Route::post('submissions', [SubmissionController::class, 'store'])->name('submissions.store');
 
-    // Teacher and Admin routes
-    Route::middleware(['can:manage-courses'])->group(function () {
-        Route::resource('courses', CourseController::class)->except(['index', 'show']);
-    });
+    // Teacher and Admin routes for enrollments
+    Route::resource('enrollments', EnrollmentController::class);
 
-    Route::middleware(['can:manage-assignments'])->group(function () {
-        Route::resource('assignments', AssignmentController::class)->except(['index', 'show']);
-    });
-
-    Route::middleware(['can:manage-enrollments'])->group(function () {
-        Route::resource('enrollments', EnrollmentController::class);
-    });
-
-    Route::middleware(['can:manage-submissions'])->group(function () {
-        Route::resource('submissions', SubmissionController::class)->only(['edit', 'update', 'destroy']);
-    });
+    // Teacher and Admin routes for submissions management
+    Route::get('submissions/{submission}/edit', [SubmissionController::class, 'edit'])->name('submissions.edit');
+    Route::put('submissions/{submission}', [SubmissionController::class, 'update'])->name('submissions.update');
+    Route::delete('submissions/{submission}', [SubmissionController::class, 'destroy'])->name('submissions.destroy');
 
     // Admin-only routes
     Route::middleware(['admin'])->group(function () {

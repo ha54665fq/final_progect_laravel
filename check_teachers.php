@@ -1,22 +1,22 @@
 <?php
 
-require_once 'vendor/autoload.php';
+// Manually load the Laravel bootstrap file
+require __DIR__.'/bootstrap/app.php';
 
-$app = require_once 'bootstrap/app.php';
-$app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
+// Manually boot the application to access Laravel services
+$app = require_once __DIR__.'/bootstrap/app.php';
+$app->make('Illuminate\Contracts\Http\Kernel')->bootstrap();
 
 use App\Models\User;
 
-echo "=== بيانات المعلمين ===\n";
+// Query for users with the 'teacher' role
+$teachers = User::where('role', 'teacher')->get();
 
-$teachers = User::where('role', 'teacher')->get(['id', 'name', 'email', 'role']);
-
-foreach ($teachers as $teacher) {
-    echo "ID: " . $teacher->id . "\n";
-    echo "الاسم: " . $teacher->name . "\n";
-    echo "البريد الإلكتروني: " . $teacher->email . "\n";
-    echo "الدور: " . $teacher->role . "\n";
-    echo "------------------------\n";
+if ($teachers->isEmpty()) {
+    echo "No users with the 'teacher' role found.\n";
+} else {
+    echo "Users with the 'teacher' role:\n";
+    foreach ($teachers as $teacher) {
+        echo " - ID: " . $teacher->id . ", Name: " . $teacher->name . ", Email: " . $teacher->email . ", Role: " . $teacher->role . "\n";
+    }
 }
-
-echo "إجمالي عدد المعلمين: " . $teachers->count() . "\n";

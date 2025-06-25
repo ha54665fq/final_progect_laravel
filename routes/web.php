@@ -60,33 +60,36 @@ Route::middleware(['auth'])->group(function () {
     Route::get('submissions', [SubmissionController::class, 'index'])->name('submissions.index');
     Route::get('submissions/{submission}', [SubmissionController::class, 'show'])->name('submissions.show');
 
-    // Simplified routes for testing - remove middleware temporarily
-    Route::get('courses/create', [CourseController::class, 'create'])->name('courses.create');
-    Route::post('courses', [CourseController::class, 'store'])->name('courses.store');
-    Route::get('courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
-    Route::put('courses/{course}', [CourseController::class, 'update'])->name('courses.update');
-    Route::delete('courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
+    // Teacher and Admin routes for courses and assignments
+    Route::middleware(['teacher'])->group(function () {
+        Route::get('courses/create', [CourseController::class, 'create'])->name('courses.create');
+        Route::post('courses', [CourseController::class, 'store'])->name('courses.store');
+        Route::get('courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
+        Route::put('courses/{course}', [CourseController::class, 'update'])->name('courses.update');
+        Route::delete('courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
 
-    Route::get('assignments/create', [AssignmentController::class, 'create'])->name('assignments.create');
-    Route::post('assignments', [AssignmentController::class, 'store'])->name('assignments.store');
-    Route::get('assignments/{assignment}/edit', [AssignmentController::class, 'edit'])->name('assignments.edit');
-    Route::put('assignments/{assignment}', [AssignmentController::class, 'update'])->name('assignments.update');
-    Route::delete('assignments/{assignment}', [AssignmentController::class, 'destroy'])->name('assignments.destroy');
+        Route::get('assignments/create', [AssignmentController::class, 'create'])->name('assignments.create');
+        Route::post('assignments', [AssignmentController::class, 'store'])->name('assignments.store');
+        Route::get('assignments/{assignment}/edit', [AssignmentController::class, 'edit'])->name('assignments.edit');
+        Route::put('assignments/{assignment}', [AssignmentController::class, 'update'])->name('assignments.update');
+        Route::delete('assignments/{assignment}', [AssignmentController::class, 'destroy'])->name('assignments.destroy');
+
+        // Teacher and Admin routes for enrollments
+        Route::resource('enrollments', EnrollmentController::class)->except(['show', 'index']);
+
+        // Teacher and Admin routes for submissions management
+        Route::get('submissions/{submission}/edit', [SubmissionController::class, 'edit'])->name('submissions.edit');
+        Route::put('submissions/{submission}', [SubmissionController::class, 'update'])->name('submissions.update');
+        Route::delete('submissions/{submission}', [SubmissionController::class, 'destroy'])->name('submissions.destroy');
+    });
 
     // Student-specific routes
     Route::get('submissions/create', [SubmissionController::class, 'create'])->name('submissions.create');
     Route::post('submissions', [SubmissionController::class, 'store'])->name('submissions.store');
 
-    // Teacher and Admin routes for enrollments
-    Route::resource('enrollments', EnrollmentController::class);
-
-    // Teacher and Admin routes for submissions management
-    Route::get('submissions/{submission}/edit', [SubmissionController::class, 'edit'])->name('submissions.edit');
-    Route::put('submissions/{submission}', [SubmissionController::class, 'update'])->name('submissions.update');
-    Route::delete('submissions/{submission}', [SubmissionController::class, 'destroy'])->name('submissions.destroy');
-
     // Admin-only routes
     Route::middleware(['admin'])->group(function () {
         Route::resource('users', UserController::class);
+        Route::resource('enrollments', EnrollmentController::class)->only(['show', 'index']);
     });
 });
